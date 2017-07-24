@@ -1,0 +1,13 @@
+{% extends 'master.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        <form action="/rancid/adddevice/" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Submit" />
+        {% if message %}
+            <p>{{ message }}</p>
+        {% endif %}
+    </div>
+{% endblock %}
