@@ -3,12 +3,13 @@
 
 {% block content %}
     <div class="container">
+        <h2>Enter settings for new device group</h2>
+        <p>Device-specific settings can be inherited once devices are added to this group</p>
         <form action="/rancid/addgroup/" method="post">
-        <table>
             {% csrf_token %}
             {{ form|bootstrap }}
             <input type="submit" value="Submit" />
-        </table>
+        </form>
         {% if message %}
             <p>{{ message }}</p>
         {% endif %}

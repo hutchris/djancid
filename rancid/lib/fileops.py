@@ -1,6 +1,16 @@
 from django.conf import settings
 import os
 
+def get_device_types():
+    filePath = os.path.join(settings.RANCID_SETTINGS_DIR,'rancid.types.base')
+    with open(filePath,"r") as f:
+        lines = f.readlines()
+    typesRaw = [line.split(";")[0] for line in lines if ";" in line and "#" not in line]
+    types = list(set(typesRaw))
+    types.sort()
+    return(types)
+
+
 class RancidConf(object):
     def __init__(self,confDir=settings.RANCID_SETTINGS_DIR):
         self.confDir = os.path.join(confDir,"rancid.conf")
@@ -136,13 +146,14 @@ class Cloginrc(object):
         with open(self.cloginrcDir,"r") as cloginrcFile:
             lines = cloginrcFile.readlines()
         routerLines = [line for line in lines if ip in line]
-        details = []
+        details = {}
         if routerLines:
             for line in routerLines:
-                detail = {}
                 lineSplit = line.split(" ")
-                detail[lineSplit[1]] = lineSplit[3].replace("{","").replace("}","").replace("\n","")
-                details.append(detail)
+                value =  lineSplit[3].replace("{","").replace("}","").replace("\n","")
+                if value in ["0","1"]:
+                    value = bool(int(value))
+                details[lineSplit[1]] = value 
         else:
             raise(self.NoRouterDetails("No details configured for router: {ip}".format(ip=ip)))
         return(details)
@@ -151,6 +162,8 @@ class Cloginrc(object):
             raise(self.InvalidDetailName("{n} is not a valid cloginrc command".format(n=name)))
         with open(self.cloginrcDir,"r") as cloginrcFile:
             lines = cloginrcFile.readlines()
+        if isinstance(value,bool):
+            value = str(int(value))
         detailLine = "add {n} {ip} {{{v}}}\n".format(n=name,ip=ip,v=value)
         insertIndex = 0
         for i,line in enumerate(lines):
