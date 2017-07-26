@@ -1,0 +1,17 @@
+{% extends 'master.html' %}
+{% load bootstrap %}
+
+{% block content %}
+    <div class="container">
+        <h2>Enter settings for new device</h2>
+        <p>To edit settings that are greyed-out you must disable inheritance</p>
+        <form action="/rancid/adddevice/{{ group.name }}" method="post">
+            {% csrf_token %}
+            {{ form|bootstrap }}
+            <input type="submit" value="Submit" />
+        </form>
+        {% if message %}
+            <p>{{ message }}</p>
+        {% endif %}
+    </div>
+{% endblock %}

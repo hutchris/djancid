@@ -1,0 +1,13 @@
+{% extends 'master.html' %}
+{% load bootstrap %}
+
+{% block content %}
+    <div class="container">
+        <h2>Login</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form|bootstrap }}
+            <button type="submit">Login</button>
+        </form>
+    </div>
+{% endblock %}
