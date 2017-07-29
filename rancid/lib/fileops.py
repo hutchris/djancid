@@ -79,11 +79,16 @@ class RancidConf(object):
         pass
 
 class RouterDB(object):
-    def __init__(self,groupName):
-        self.routerDBDir = os.path.join(settings.RANCID_ROOT,groupName,"router.db")
+    def __init__(self,groupName,rancidRoot=settings.RANCID_ROOT):
+        self.routerDBDir = os.path.join(rancidRoot,groupName,"router.db")
         if not os.path.exists(self.routerDBDir):
             raise(FileNotFoundError("File {f} does not exist".format(f=self.routerDBDir)))
     def addRouter(self,ip,deviceType="cisco",status="up"):
+        if isinstance(status,bool):
+            if status:
+                status = "up"
+            else:
+                status = "down"
         with open(self.routerDBDir,"r") as routerDBFile:
             lines = routerDBFile.readlines()
         for line in lines:
@@ -93,7 +98,7 @@ class RouterDB(object):
         with open(self.routerDBDir,"w") as routerDBFile:
             routerDBFile.writelines(lines) 
     def deleteRouter(self,ip):
-        with open(self.routerDBDIR,"r") as routerDBFile:
+        with open(self.routerDBDir,"r") as routerDBFile:
             lines = routerDBFile.readlines()
         lines = [line for line in lines if ip not in line]
         with open(self.routerDBDir,"w") as routerDBFile:
@@ -102,17 +107,18 @@ class RouterDB(object):
         with open(self.routerDBDir,"r") as routerDBFile:
             lines = routerDBFile.readlines()
         for i,line in enumerate(lines):
-            editted = False
-            if line.startswith(ip) and editted == False:
+            if line.startswith(ip):
                 routerLine = line.split(";")
                 if deviceType is not None:
                     routerLine[1] = deviceType
                 if status is not None:
+                    if isinstance(status,bool):
+                        if status:
+                            status = "up"
+                        else:
+                            status = "down"
                     routerLine[2] = status
                 lines[i] = "{l}\n".format(l=";".join(routerLine))
-                editted = True
-        if not editted:
-            raise(self.RouterNotFoundException("Cannot edit imaginary router: {r}".format(r=ip)))
         with open(self.routerDBDir,"w") as routerDBFile:
             routerDBFile.writelines(lines)
     def getRouterDetails(self,ip):
@@ -150,9 +156,17 @@ class Cloginrc(object):
         if routerLines:
             for line in routerLines:
                 lineSplit = line.split(" ")
-                value =  lineSplit[3].replace("{","").replace("}","").replace("\n","")
-                if value in ["0","1"]:
-                    value = bool(int(value))
+                if len(lineSplit) == 4:
+                    value = lineSplit[3].replace("{","").replace("}","").replace("\n","")
+                    if value in ["0","1"]:
+                        value = bool(int(value))
+                elif len(lineSplit) > 4:
+                    value = []
+                    for item in lineSplit[3:]:
+                        item = item.replace("{","").replace("}","").replace("\n","")
+                        if item in ["0","1"]:
+                             item = bool(int(item))
+                        value.append(item)
                 details[lineSplit[1]] = value 
         else:
             raise(self.NoRouterDetails("No details configured for router: {ip}".format(ip=ip)))
@@ -164,7 +178,11 @@ class Cloginrc(object):
             lines = cloginrcFile.readlines()
         if isinstance(value,bool):
             value = str(int(value))
-        detailLine = "add {n} {ip} {{{v}}}\n".format(n=name,ip=ip,v=value)
+        if isinstance(value,list):
+            value = " ".join(["{{{v}}}".format(v=item) for item in value])
+        else:
+            value = "{{{v}}}".format(v=value)
+        detailLine = "add {n} {ip} {v}\n".format(n=name,ip=ip,v=value)
         insertIndex = 0
         for i,line in enumerate(lines):
             if ip in line and name in line:

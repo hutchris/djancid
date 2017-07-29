@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
+from django import forms
 from rancid.lib.main import DjancidGroup,DjancidDevice,get_permitted_groups
 from rancid.lib.fileops import RancidConf,Cloginrc,RouterDB
 from rancid.models import RancidGroupPermission
@@ -13,15 +14,6 @@ from rancid.forms import GroupForm,DeviceForm
 rcFile = RancidConf()
 
 class BaseView(LoginRequiredMixin,View):
-    def get_permitted_groups(self,user):
-        if user.is_staff:
-            permitted_groups = rcFile.readSetting("LIST_OF_GROUPS").split(" ")
-        else:
-            groups = user.groups
-            group_permissions = RancidGroupPermission.objects.filter(djangoGroup__in=groups)
-            permitted_groups = list(set([gp.rancidGroup for gp in group_permissions]))
-        return(permitted_groups)
-
     def ip_to_b64(self,ipStr):
         b64encoded = b64encode(bytes(ipStr,'ascii')).decode('ascii')
         return(b64encoded)
@@ -45,7 +37,7 @@ class NewGroup(BaseView):
         if form.is_valid():
             groupObj = DjancidGroup(form.cleaned_data['name'])
             for settingName,settingValue in form.cleaned_data.items():
-                if settingName in settings.ALLSETTINGS and settingValue not in ['------','',None]:
+                if settingName in settings.ALLSETTINGS and settingValue not in ['------','',None,"00000000"]:
                     groupObj.putSetting(settingName,settingValue)
                 elif settingName.startswith("perm_"):
                     if settingValue:
@@ -67,12 +59,40 @@ class GroupDetails(NewGroup):
         if group in permitted_groups:
             context = {}
             djGroup = DjancidGroup(group)
-            djGroup.djDevices = [DjancidDevice(d) for d in djGroup.devices]
-            context["group"] = djGroup
-            context["form"] = GroupForm(djGroup.allSettings)
+            djGroup.djDevices = [DjancidDevice(d['ip'],djGroup) for d in djGroup.devices] 
+            djGroup.fillAllSettings()
+            settingsDict = dict(djGroup.allSettings)
+            for passwordSetting in ["password","enablepassword"]:
+                if passwordSetting in settingsDict.keys():
+                    settingsDict[passwordSetting] = "00000000"
+            context['group'] = djGroup
+            form = GroupForm(settingsDict)
+            form.fields['name'].widget = forms.HiddenInput()
+            form.field['name'].required = False
+            context['form'] = form
             return(render(request,'rancid/GroupDetails.html',context))
         else:
             return(redirect("/"))
+
+    def post(self,request,group):
+        form = GroupForm(request.POST)
+        if form.is_valid():
+            groupObj = DjancidGroup(group)
+            for settingName,settingValue in form.cleaned_data.items():
+                if settingName in settings.ALLSETTINGS and settingValue not in ['------','',None,"00000000"]:
+                    groupObj.putSetting(settingName,settingValue)
+                elif settingName.startswith("perm_"):
+                    if settingValue:
+                        rgp,created = RancidGroupPermission.objects.get_or_create(
+                                rancidGroup=groupObj.name,
+                                djangoGroup=settingName.replace("perm_","")
+                            )
+                        if created:
+                            rgp.save()
+            groupObj.save()
+        else:
+            return(HttpResponse(form.errors))
+        return(redirect('GroupDetails',group=groupObj.name))
 
 
 class NewDevice(BaseView):
@@ -83,7 +103,10 @@ class NewDevice(BaseView):
             deviceObj = DjancidDevice("",groupObj)
             settingsDict = dict(deviceObj.allSettings)
             del settingsDict['name']
-            settingsDict["inherits"] = True
+            settingsDict['inherits'] = True
+            for passwordSetting in ["password","enablepassword"]:
+                if passwordSetting in settingsDict.keys():
+                    settingsDict[passwordSetting] = "00000000"
             form = DeviceForm(request.user,settingsDict)
             context = {"form":form}
             context['group'] = groupObj
@@ -98,12 +121,12 @@ class NewDevice(BaseView):
             groupObj = DjancidGroup(group)
             deviceObj = DjancidDevice(form.cleaned_data['ip'],groupObj)
             for settingName,settingValue in form.cleaned_data.items():
-                if settingName in settings.ALLSETTINGS and settingValue not in ['------','',None]:
+                if settingName in settings.ALLSETTINGS and settingValue not in ['------','',None,"00000000"]:
                     deviceObj.putSetting(settingName,settingValue)
-                if settingName == "inherits":
+                elif settingName == "inherits":
                     deviceObj.inherits = settingValue
             deviceObj.save()
-            return(redirect("DeviceDetails",group=groupObj.name,device=self.ip_to_b64(deviceObj.name)))
+            return(render(request,"rancid/DeviceDetails.html",context))
         else:
             return(HttpResponse(str(form.errors)))
 
@@ -115,14 +138,43 @@ class DeviceDetails(BaseView):
         if group in permitted_groups:
             groupObj = DjancidGroup(group)
             deviceObj = DjancidDevice(device,groupObj)
-            deviceObj.b64code = self.ip_to_b64(deviceObj.name)
             context = {"device":deviceObj,"group":groupObj}
-            form = DeviceForm(request.user,deviceObj.allSettings)
+            deviceObj.fillAllSettings()
+            settingsDict = dict(deviceObj.allSettings)
+            for passwordSetting in ["password","enablepassword"]:
+                if passwordSetting in settingsDict.keys():
+                    settingsDict[passwordSetting] = "00000000"
+            form = DeviceForm(request.user,settingsDict)
+            form.fields['ip'].widget = forms.HiddenInput()
+            form.fields['ip'].required = False
             if deviceObj.inherits:
                 for fieldName,fieldValue in form.fields.items():
                     if fieldName in groupObj.allSettings.keys():
-                        fieldValue.disabled = True
+                        fieldValue.label = "{l} (i)".format(l=fieldValue.label)
             context['form'] = form
             return(render(request,'rancid/DeviceDetails.html',context))
         else:
             return(redirect("/"))
+
+    def post(self,request,group,device):
+        context = {}
+        form = DeviceForm(request.user,request.POST)
+        context['form'] = form
+        permitted_groups = get_permitted_groups(request.user)
+        if form.is_valid() and group in permitted_groups:
+            groupObj = DjancidGroup(group)
+            device = self.b64_to_ip(device)
+            deviceObj = DjancidDevice(device,groupObj)
+            for settingName,settingValue in form.cleaned_data.items():
+                if settingName in settings.ALLSETTINGS and settingValue not in ['------','',None,"00000000"]:
+                    deviceObj.putSetting(settingName,settingValue)
+                elif settingName == "inherits":
+                    deviceObj.inherits = settingValue
+            deviceObj.save()
+            context['device'] = deviceObj
+            context['group'] = groupObj
+            return(render(request,'rancid/DeviceDetails.html',context))
+
+        else:
+            return(HttpResponse(str(form.errors)))
+

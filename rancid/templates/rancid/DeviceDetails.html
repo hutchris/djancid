@@ -2,7 +2,7 @@
 {% load bootstrap %}
 
 {% block content %}
-    <div class="container">
+    <div class="container-fluid">
         <h2>Device: {{ device.name }}</h2>
         <form method="post" action="/rancid/delete/device/{{ device.name }}">
             <button type="submit">Delete Device</button>
@@ -10,7 +10,7 @@
         <h4><a href="/rancid/config/{{ device.b64code }}">View Config</a></h4>
         <h4><a href="/rancid/changes/{{ device.b64code }}">View Change History</a></h4>
         <h3>Device Settings</h3>
-        <form action="/rancid/devicedetails/{{ device.b64code }}" method="post">
+        <form action="/rancid/devicedetails/{{ device.b64code }}/" method="post">
             {% csrf_token %}
             {{ form|bootstrap }}
             <input type="submit" value="Submit" />

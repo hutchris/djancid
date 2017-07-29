@@ -2,7 +2,7 @@
 {% load bootstrap %}
 
 {% block content %}
-    <div class="container">
+    <div class="container-fluid">
         <h2>Enter settings for new device</h2>
         <p>To edit settings that are greyed-out you must disable inheritance</p>
         <form action="/rancid/adddevice/{{ group.name }}" method="post">

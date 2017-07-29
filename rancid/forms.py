@@ -6,8 +6,10 @@ from rancid.lib.main import get_permitted_groups
 
 
 def password_validator(value):
-    if "{" in value or "}" in value:
-        raise(ValidationError("Field cannot contain '}' or '{'"))
+    badValues = ["{","}"," ","\\"]
+    for badValue in badValues:
+        if badValue in value:
+            raise(ValidationError("Field cannot contain {bvs}".format(badValues)))
 
 
 class GroupForm(forms.Form):
@@ -15,7 +17,8 @@ class GroupForm(forms.Form):
     deviceType = forms.ChoiceField(label="Device Type",required=False)
     status = forms.BooleanField(initial=True,label="Enable Backups",required=False)
     user = forms.CharField(max_length=100,label="Username",required=False)
-    password = forms.CharField(widget=forms.PasswordInput,max_length=128,label="Password",required=False,validators=[password_validator])
+    password = forms.CharField(widget=forms.PasswordInput(render_value=True),max_length=128,label="Password",required=False,validators=[password_validator])
+    enablepassword = forms.CharField(widget=forms.PasswordInput(render_value=True),max_length=128,label="Enable Password",required=False,validators=[password_validator])
     method = forms.ChoiceField(choices=(("SSH","SSH"),("Telnet","Telnet")),label="Connection Method",required=False)
     noenable = forms.BooleanField(initial=True,label="No Enable",required=False)
     autoenable = forms.BooleanField(initial=True,label="Auto Enable",required=False)
@@ -44,8 +47,9 @@ class DeviceForm(forms.Form):
     deviceType = forms.ChoiceField(label="Device Type*",required=True)
     status = forms.BooleanField(initial=True,label="Enable Backups*",required=True)
     user = forms.CharField(max_length=100,label="Username*",required=True)
-    password = forms.CharField(widget=forms.PasswordInput,max_length=128,label="Password*",required=True,validators=[password_validator])
-    method = forms.ChoiceField(choices=(("ssh","SSH"),("telnet","Telnet")),label="Connection Method*",required=True)
+    password = forms.CharField(widget=forms.PasswordInput(render_value=True),max_length=128,label="Password*",required=True,validators=[password_validator])
+    enablepassword = forms.CharField(widget=forms.PasswordInput(render_value=True),max_length=128,label="Enable Password",required=False,validators=[password_validator])
+    method = forms.ChoiceField(choices=(("SSH","SSH"),("Telnet","Telnet")),label="Connection Method*",required=True)
     noenable = forms.BooleanField(initial=True,label="No Enable",required=False)
     autoenable = forms.BooleanField(initial=True,label="Auto Enable",required=False)
     prompt = forms.CharField(label="Prompt",required=False)

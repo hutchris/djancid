@@ -2,30 +2,25 @@
 {% load bootstrap %}
 
 {% block content %}
-    <div class="container">
-        <h2>Group: {{ group.name }}</h2>
-        <form method="post" action="/rancid/delete/group/{{ group.name }}">
-            <button type="submit">Delete Group</button>
-        </form>
-        <h3>Devices:</h3>
-        {% if group.djDevices %}
-        <ul>
-            {% for device in group.djDevices %}
-            <li><a href="/rancid/devicedetails/{{ device.b64code }}">{{ device.ip }}</a></li>
-            {% endfor %}
-        </ul>
+    <h2>Group: {{ group.name }} <a href="#" style="color: red; font-size: 20px; float: right;"><span class="glyphicon glyphicon-trash"></span></a></h2>
+    <h3>Devices:</h3>
+    <div class="list-group">
+        {% if not group.djDevices %}
+        <a href="#" class="list-group-item">No devices in this group</a>
         {% else %}
-        <p>No devices in this group</p>
-        {% endif %}
-        <a href="/rancid/adddevice/{{ group.name }}">Add a new device</a>
-        <h3>Group Settings</h3>
-        <form action="/rancid/groupdetails/{{ group.name }}" method="post">
-            {% csrf_token %}
-            {{ form|bootstrap }}
-            <input type="submit" value="Submit" />
-        </form>
-        {% if message %}
-            <p>{{ message }}</p>
+        {% for device in group.djDevices %}
+        <a href="/rancid/devicedetails/{{ group.name }}/{{ device.b64code }}" class="list-group-item">{{ device.name }}</a>
+        {% endfor %}
+        <a href="/rancid/adddevice/{{ group.name }}" class="list-group-item"><span class="glyphicon glyphicon-plus-sign"></span> Add a new device</a>
         {% endif %}
     </div>
+    <h3>Group Settings</h3>
+    <form action="/rancid/groupdetails/{{ group.name }}" method="post">
+        {% csrf_token %}
+        {{ form|bootstrap }}
+        <input type="submit" value="Submit" />
+    </form>
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
 {% endblock %}

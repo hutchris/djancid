@@ -114,8 +114,9 @@ RCSETTINGS = [
     "prompt","sshcmd","timeout","user","userpassword",
     "userprompt"
 ]
+EXTRASETTINGS = ["enablepassword"]
 
-ALLSETTINGS = DBSETTINGS + RCSETTINGS 
+ALLSETTINGS = DBSETTINGS + RCSETTINGS + EXTRASETTINGS
 
 try:
     from local_settings import *
