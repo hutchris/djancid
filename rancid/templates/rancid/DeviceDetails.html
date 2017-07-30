@@ -3,14 +3,14 @@
 
 {% block content %}
     <div class="container-fluid">
-        <h2>Device: {{ device.name }}</h2>
-        <form method="post" action="/rancid/delete/device/{{ device.name }}">
-            <button type="submit">Delete Device</button>
-        </form>
-        <h4><a href="/rancid/config/{{ device.b64code }}">View Config</a></h4>
-        <h4><a href="/rancid/changes/{{ device.b64code }}">View Change History</a></h4>
+        <h2>Device: {{ device.name }} <a href="#" style="color: red; font-size: 20px; float: right;"><span class="glyphicon glyphicon-trash"></span></a></h2>
+        <div class="list-group">
+            <a class="list-group-item" href="/rancid/config/{{ device.b64code }}">View Config</a>
+            <a class="list-group-item" href="/rancid/changes/{{ device.b64code }}">View Change History</a>
+        </div>
         <h3>Device Settings</h3>
-        <form action="/rancid/devicedetails/{{ device.b64code }}/" method="post">
+        <p>Settings inheritted from group (i) will be overwritten if changed</p>
+        <form action="/rancid/devicedetails/{{ group.name }}/{{ device.b64code }}/" method="post">
             {% csrf_token %}
             {{ form|bootstrap }}
             <input type="submit" value="Submit" />

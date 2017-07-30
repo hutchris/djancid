@@ -3,7 +3,7 @@ from base64 import b64encode,b64decode
 import os
 import shutil
 from rancid.lib.fileops import RouterDB,Cloginrc,RancidConf
-from rancid.models import Device,RancidGroupSetting
+from rancid.models import Device,RancidGroupSetting,RancidGroupPermission
 from django.conf import settings
 
 rcFile = RancidConf()
@@ -229,3 +229,20 @@ class DjancidGroup(DjancidBase):
             djDevice = DjancidDevice(device['ip'],self)
             if djDevice.inherits:
                 djDevice.save()
+
+    def deleteSetting(self,settingName):
+        groupSetting = RancidGroupSetting.objects.filter(rancidGroup=self.name,settingName=settingName)
+        if groupSetting.exists():
+            groupSetting.delete()
+
+    def addPermission(self,dangoGroup):
+        rgp,created = RancidGroupPermission.objects.get_or_create(
+                rancidGroup=self.name,djangoGroup=djangoGroup)
+        if created:
+            rgp.save()
+
+    def deletePermission(self,djangoGroup):
+        rgp = RancidGroupPermission.objects.filter(
+                rancidGroup=self.name,djangoGroup=djangoGroup)
+        if rgp.exists():
+            rgp.delete()

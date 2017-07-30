@@ -129,7 +129,11 @@ class RouterDB(object):
             router = routerLines[0].replace("\n","").split(";")
         else:
             raise(self.RouterNotFoundException("Router does not exist: {r}".format(r=ip)))
-        routerOutput = {"ip":ip,"deviceType":router[1],"status":router[2]}
+        if router[2] == "down":
+            status = False
+        else:
+            status = True
+        routerOutput = {"ip":ip,"deviceType":router[1],"status":status}
         return(routerOutput)
     def getAllRouters(self):
         with open(self.routerDBDir,"r") as routerDBFile:
@@ -138,7 +142,11 @@ class RouterDB(object):
         for line in lines:
             router = line.replace("\n","").split(";")
             if len(router) == 3:
-                routerLines.append({"ip":router[0],"deviceType":router[1],"status":router[2]})
+                if router[2] == "down":
+                    status = False
+                else:
+                    status = True
+                routerLines.append({"ip":router[0],"deviceType":router[1],"status":status})
         return(routerLines)
     class RouterAlreadyExistsException(Exception):
         pass

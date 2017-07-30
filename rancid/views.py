@@ -58,37 +58,38 @@ class GroupDetails(NewGroup):
         permitted_groups = get_permitted_groups(request.user)
         if group in permitted_groups:
             context = {}
-            djGroup = DjancidGroup(group)
-            djGroup.djDevices = [DjancidDevice(d['ip'],djGroup) for d in djGroup.devices] 
-            djGroup.fillAllSettings()
-            settingsDict = dict(djGroup.allSettings)
+            groupObj = DjancidGroup(group)
+            groupObj.djDevices = [DjancidDevice(d['ip'],groupObj) for d in groupObj.devices] 
+            groupObj.fillAllSettings()
+            settingsDict = dict(groupObj.allSettings)
             for passwordSetting in ["password","enablepassword"]:
                 if passwordSetting in settingsDict.keys():
                     settingsDict[passwordSetting] = "00000000"
-            context['group'] = djGroup
+            context['group'] = groupObj
             form = GroupForm(settingsDict)
             form.fields['name'].widget = forms.HiddenInput()
-            form.field['name'].required = False
+            form.fields['name'].required = False
             context['form'] = form
             return(render(request,'rancid/GroupDetails.html',context))
         else:
             return(redirect("/"))
 
     def post(self,request,group):
-        form = GroupForm(request.POST)
-        if form.is_valid():
-            groupObj = DjancidGroup(group)
-            for settingName,settingValue in form.cleaned_data.items():
-                if settingName in settings.ALLSETTINGS and settingValue not in ['------','',None,"00000000"]:
-                    groupObj.putSetting(settingName,settingValue)
-                elif settingName.startswith("perm_"):
-                    if settingValue:
-                        rgp,created = RancidGroupPermission.objects.get_or_create(
-                                rancidGroup=groupObj.name,
-                                djangoGroup=settingName.replace("perm_","")
-                            )
-                        if created:
-                            rgp.save()
+        groupObj = DjancidGroup(group)
+        form = GroupForm(request.POST,initial=groupObj.allSettings)
+        permitted_groups = get_permitted_groups(request.user)
+        if form.is_valid() and group in permitted_groups:
+            for fieldName in form.changed_data:
+                if fieldName in settings.ALLSETTINGS:
+                    if form.cleaned_data[fieldName] in ['','------',None]:
+                        groupObj.deleteSetting(fieldName)
+                    else:
+                        groupObj.putSetting(fieldName,form.cleaned_data[fieldName])
+                elif fieldName.startswith("perm_"):
+                    if form.cleaned_data[fieldName]:
+                        groupObj.addPermission(fieldName.replace("perm_",""))
+                    else:
+                        groupObj.deletePermission(fieldName.replace("perm_",""))
             groupObj.save()
         else:
             return(HttpResponse(form.errors))
@@ -174,7 +175,6 @@ class DeviceDetails(BaseView):
             context['device'] = deviceObj
             context['group'] = groupObj
             return(render(request,'rancid/DeviceDetails.html',context))
-
         else:
             return(HttpResponse(str(form.errors)))
 
