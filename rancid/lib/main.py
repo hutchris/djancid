@@ -59,9 +59,7 @@ class DjancidBase(object):
 
 class DjancidDevice(DjancidBase):
     '''Class to represent a Djancid Device. Device settings are pulled from:
-    *the group's router.db file
-    *the .cloginrc file
-    *Django db'''
+    the group's router.db file, the .cloginrc file and the Django db'''
 
     def __init__(self,name,groupObj):
         self.name = name
@@ -118,13 +116,15 @@ class DjancidDevice(DjancidBase):
             raise(MissingRequiredSetting("deviceType setting needs to be defined"))
         if "status" not in self.dbDetails.keys():
             raise(MissingRequiredSetting("status setting needs to be defined"))
+        self.djangoDevice,created = Device.objects.get_or_create(ip=self.name)
+        self.djangoDevice.inheritGroupSettings = self.inherits
+        self.djangoDevice.save()
+        if self.inherits:
+            self.inheritGroupSettings()
         try:
             self.rdbFile.addRouter(self.name,self.dbDetails['deviceType'],self.dbDetails['status'])
         except self.rdbFile.RouterAlreadyExistsException:
             self.rdbFile.editRouter(self.name,self.dbDetails['deviceType'],self.dbDetails['status'])
-        self.djangoDevice,created = Device.objects.get_or_create(ip=self.name)
-        self.djangoDevice.inheritGroupSettings = self.inherits
-        self.djangoDevice.save()
         for settingName,settingValue in self.rcDetails.items():
             self.crcFile.addDetail(self.name,settingName,settingValue)
         if self.exDetails:
@@ -147,6 +147,13 @@ class DjancidDevice(DjancidBase):
         self.allSettings['inherits'] = self.inherits
         self.allSettings['group'] = self.parentGroup.name
         self.allSettings['name'] = self.name
+
+    def deleteSetting(self,settingName):
+        if settingName in self.rcDetails.keys():
+            del self.rcDetails[settingName]
+            self.crcFile.deleteDetail(self.name,settingName)
+        if settingName in self.exDetails.keys():
+            del self.exDetails[settingName]
 
 
 class DjancidGroup(DjancidBase):
@@ -234,6 +241,9 @@ class DjancidGroup(DjancidBase):
         groupSetting = RancidGroupSetting.objects.filter(rancidGroup=self.name,settingName=settingName)
         if groupSetting.exists():
             groupSetting.delete()
+        for detail in [self.dbDetails,self.rcDetails,self.exDetails]:
+            if settingName in detail.keys():
+                del detail[settingName]
 
     def addPermission(self,dangoGroup):
         rgp,created = RancidGroupPermission.objects.get_or_create(

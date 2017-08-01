@@ -5,3 +5,6 @@ __pycache__/
 local_settings.py
 
 ori_*
+
+log/
+*.log
