@@ -5,6 +5,7 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse,Http404
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Group
 from django.views import View
 from django import forms
 from rancid.lib.main import DjancidGroup,DjancidDevice,get_permitted_groups
@@ -88,6 +89,10 @@ class GroupDetails(BaseView):
             groupObj.djDevices = [DjancidDevice(d['ip'],groupObj) for d in groupObj.devices]
             groupObj.fillAllSettings()
             form = self.prepForm(groupObj)
+            if not request.user.is_staff:
+                for fieldName,fieldValue in form.fields.items():
+                    if fieldName.startswith("perm_"):
+                        fieldValue.widget = forms.HiddenInput()
             context['form'] = form
             context['group'] = groupObj
             return(render(request,'rancid/GroupDetails.html',context))
@@ -105,12 +110,16 @@ class GroupDetails(BaseView):
                         groupObj.deleteSetting(fieldName)
                     else:
                         groupObj.putSetting(fieldName,form.cleaned_data[fieldName])
-                elif fieldName.startswith("perm_"):
+            for fieldName,fieldValue in form.cleaned_data.items():
+                if fieldName.startswith("perm_"):
+                    djangoGroup = Group.objects.get(name=fieldName.replace("perm_",""))
                     if form.cleaned_data[fieldName]:
-                        groupObj.addPermission(fieldName.replace("perm_",""))
+                        groupObj.addPermission(djangoGroup)
                     else:
-                        groupObj.deletePermission(fieldName.replace("perm_",""))
+                        groupObj.deletePermission(djangoGroup)
             groupObj.save()
+            groupObj.djDevices = [DjancidDevice(d['ip'],groupObj) for d in groupObj.devices]
+            context = {}
             context['form'] = form
             context['group'] = groupObj
             return(render(request,'rancid/GroupDetails.html',context))

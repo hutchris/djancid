@@ -37,7 +37,9 @@ class GroupForm(forms.Form):
         self.fields["deviceType"].choices = [('------','------')] + [(d,d) for d in get_device_types()]
         groups = Group.objects.all()
         for groupObj in groups:
-            self.fields["perm_{gn}".format(gn=groupObj.name)] = form.BooleanField(initial=True,label="Group Access: {gn}".format(gn=groupObj.name))
+            fieldName = "perm_{gn}".format(gn=groupObj.name)
+            self.fields[fieldName] = forms.BooleanField(initial=True,label="Group Access: {gn}".format(gn=groupObj.name))
+            self.fields[fieldName].required = False
 
 
 class DeviceForm(forms.Form):

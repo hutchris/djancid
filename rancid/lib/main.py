@@ -245,7 +245,7 @@ class DjancidGroup(DjancidBase):
             if settingName in detail.keys():
                 del detail[settingName]
 
-    def addPermission(self,dangoGroup):
+    def addPermission(self,djangoGroup):
         rgp,created = RancidGroupPermission.objects.get_or_create(
                 rancidGroup=self.name,djangoGroup=djangoGroup)
         if created:
