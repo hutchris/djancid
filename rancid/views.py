@@ -9,6 +9,7 @@ from django.views import View
 from django import forms
 from rancid.lib.main import DjancidGroup,DjancidDevice,get_permitted_groups
 from rancid.lib.fileops import RancidConf,Cloginrc,RouterDB
+from rancid.lib.gitops import get_config,get_config_diffs
 from rancid.models import RancidGroupPermission
 from rancid.forms import GroupForm,DeviceForm
 
@@ -22,6 +23,17 @@ class BaseView(LoginRequiredMixin,View):
     def b64_to_ip(self,b64encoded):
         ipStr = b64decode(bytes(b64encoded,'ascii')).decode('ascii')
         return(ipStr)
+
+
+class AllDevices(BaseView):
+    def get(self,request):
+        permitted_groups = get_permitted_groups(request.user)
+        context = {}
+        groups = [DjancidGroup(gp) for gp in permitted_groups]
+        for groupObj in groups:
+            groupObj.djDevices = [DjancidDevice(dev['ip'],groupObj) for dev in groupObj.devices]
+        context['groups'] = groups
+        return(render(request,'rancid/AllDevices.html',context))
 
 
 class NewGroup(BaseView):
@@ -210,3 +222,85 @@ class DeviceDetails(NewDevice):
         else:
             raise(Http404("Permission Error"))
 
+class ConfirmGroup(BaseView):
+    def get(self,request,name):
+        permitted_groups = get_permitted_groups(request.user)
+        if name in permitted_groups:
+            context = {}
+            groupObj = DjancidGroup(name)
+            if groupObj.devices:
+                alsoDeleting = [DjancidDevice(dev['ip']) for dev in groupObj.devices]
+                context['alsoDeleting'] = alsoDeleting
+            context['group'] = groupObj
+            return(render(request,'rancid/ConfirmGroup.html',context))
+        else:
+            raise(Http404("Permission Error"))
+
+    def post(self,request,name):
+        permitted_groups = get_permitted_groups(request.user)
+        if name in permitted_groups:
+            if request.POST.get("Delete"):
+                groupObj = DjancidGroup(name)
+                groupObj.delete()
+            return(redirect('/'))
+
+
+class ConfirmDevice(BaseView):
+    def get(self,request,group,name):
+        permitted_groups = get_permitted_groups(request.user)
+        if group in permitted_groups:
+            context = {}
+            groupObj = DjancidGroup(group)
+            device = self.b64_to_ip(name)
+            deviceObj = DjancidDevice(device,groupObj)
+            context['device'] = deviceObj
+            context['group'] = groupObj
+            return(render(request,'rancid/ConfirmDevice.html',context))
+        else:
+            raise(Http404("Permission Error"))
+
+    def post(self,request,group,name):
+        permitted_groups = get_permitted_groups(request.user)
+        if group in permitted_groups:
+            if request.POST.get("Delete"):
+                groupObj = DjancidGroup(group)
+                device = self.b64_to_ip(name)
+                deviceObj = DjancidDevice(device,groupObj)
+                deviceObj.delete()
+            return(redirect('/'))
+        else:
+            raise(Http404("Permission Error"))
+
+
+class Config(BaseView):
+    def get(self,request,group,name):
+        permitted_groups = get_permitted_groups(request.user)
+        if group in permitted_groups:
+            context = {}
+            device = self.b64_to_ip(name)
+            groupObj = DjancidGroup(group)
+            deviceObj = DjancidDevice(device,groupObj)
+            config = get_config(group,device)
+            context['config'] = config.replace("\n","<br>")
+            context['device'] = deviceObj
+            context['group'] = groupObj
+            return(render(request,'rancid/Config.html',context))
+        else:
+            raise(Http404("Permission Error"))
+
+
+class Changes(BaseView):
+    def get(self,request,group,name):
+        permitted_groups = get_permitted_groups(request.user)
+        if group in permitted_groups:
+            device = self.b64_to_ip(name)
+            groupObj = DjancidGroup(group)
+            deviceObj = DjancidDevice(device,groupObj)
+            context = {}
+            diffs = get_config_diffs(group,device)
+            context['diffs'] = diffs
+            context['device'] = deviceObj
+            context['group'] = groupObj
+            return(render(request,'rancid/Changes.html',context))
+        else:
+            raise(Http404("Permission Error"))

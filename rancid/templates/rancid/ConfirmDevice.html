@@ -1,0 +1,14 @@
+{% extends 'master.html' %}
+{% load bootstrap %}
+
+{% block content %}
+    <div class="container-fluid">
+        <h2>Deleting Device: {{ device.name }}</h2>
+        <p>Continue?</p>
+        <form method="post" action="/rancid/confirmdevice/{{ group.name }}/{{ device.b64code }}/">
+            {% csrf_token %}
+            <button type="submit" name="Cancel" value="Cancel">Cancel</button>
+            <button type="submit" name="Delete" value="Delete">Delete</button>            
+        </form>
+    </div>
+{% endblock %}

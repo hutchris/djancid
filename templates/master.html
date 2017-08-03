@@ -16,11 +16,10 @@
 <nav class="navbar navbar-default">
     <div class="container-fluid">
       <ul class="nav navbar-nav navbar-right">
-          <li><a href="/rancid/devices/">Devices</a></li>
+          <li><a href="/">All Devices</a></li>
           {% if user.is_staff %}
           <li><a href="/rancid/addgroup/">Add Group</a></li>
           {% endif %}
-          <li><a href="/rancid/adddevice/">Add Device</a></li>
           <li><a href="/logout/">Logout</a></li>
       </ul>
     </div>
@@ -29,11 +28,6 @@
 <div id="content" class="container-fluid">
     {% block content %}
     {% endblock %}
-</div>
-<div class="container-fluid">
-    <div class="row">
-        <p>footer</p>
-    </div>
 </div>
 </div>
 </body>

@@ -3,10 +3,10 @@
 
 {% block content %}
     <div class="container-fluid">
-        <h2>Device: {{ device.name }} <a href="#" style="color: red; font-size: 20px; float: right;"><span class="glyphicon glyphicon-trash"></span></a></h2>
+        <h2>Device: {{ device.name }} <a href="/rancid/confirmdevice/{{ group.name }}/{{ device.b64code }}/" style="color: red; font-size: 20px; float: right;"><span class="glyphicon glyphicon-trash"></span></a></h2>
         <div class="list-group">
-            <a class="list-group-item" href="/rancid/config/{{ device.b64code }}">View Config</a>
-            <a class="list-group-item" href="/rancid/changes/{{ device.b64code }}">View Change History</a>
+            <a class="list-group-item" href="/rancid/config/{{ group.name }}/{{ device.b64code }}">View Config</a>
+            <a class="list-group-item" href="/rancid/changes/{{ group.name }}/{{ device.b64code }}">View Change History</a>
         </div>
         <h3>Device Settings</h3>
         <p>Settings inheritted from group (i) will be overwritten if changed</p>

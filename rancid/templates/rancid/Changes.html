@@ -1,0 +1,11 @@
+{% extends 'master.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        <h3>Configuration history for device: {{ device.name }}</h3>
+        {% for diff in diffs %}
+            <h4>{{ diff.datetime }}</h4>
+            <p>{{ diff.text|safe }}</p>
+        {% endfor %}
+    </div>
+{% endblock %}

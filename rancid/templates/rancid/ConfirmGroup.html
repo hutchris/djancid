@@ -1,0 +1,22 @@
+{% extends 'master.html' %}
+{% load bootstrap %}
+
+{% block content %}
+    <div class="container-fluid">
+        <h2>Deleting Group: {{ group.name }}</h2>
+        {% if alsoDeleting %}
+            <h3>WARNING!! These devices will also be deleted</h3>
+            <ul class="list-group">
+            {% for device in alsoDeleting %}
+                <li class="list-group-item">{{ device.name }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+        <p>Continue?</p>
+        <form method="post" action="/rancid/confirmgroup/{{ group.name }}/">
+            {% csrf_token %}
+            <button type="submit" name="Cancel" value="Cancel">Cancel</button>
+            <button type="submit" name="Delete" value="Delete">Delete</button>            
+        </form>
+    </div>
+{% endblock %}

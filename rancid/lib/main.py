@@ -16,7 +16,7 @@ def get_permitted_groups(user):
     if user.is_staff:
         permitted_groups = rcFile.readSetting("LIST_OF_GROUPS").split(" ")
     else:
-        groups = user.groups
+        groups = user.groups.all()
         group_permissions = RancidGroupPermission.objects.filter(djangoGroup__in=groups)
         permitted_groups = list(set([gp.rancidGroup for gp in group_permissions]))
     return(permitted_groups)

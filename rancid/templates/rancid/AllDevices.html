@@ -1,0 +1,26 @@
+{% extends 'master.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        {% for group in groups %}
+        <a href="/rancid/groupdetails/{{ group.name }}">
+            <h2>{{ group.name }}</h2>
+        </a>
+        <div class="container-fluid">
+            <div class="row-fluid">
+                {% for device in group.djDevices %}
+                <div class="col-sm-6 col-md-6 col-md-4 col-lg-3">
+                    <div class="list-group">
+                        <a href="/rancid/devicedetails/{{ group.name }}/{{ device.b64code }}/" class="list-group-item"><h4>{{ device.name }}</h4></a>
+                            <div class="list-group">
+                                <a href="/rancid/config/{{ group.name }}/{{ device.b64code }}" class="list-group-item">Latest Configuration</a>
+                                <a href="/rancid/changes/{{ group.name }}/{{ device.b64code }}" class="list-group-item">Change History</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

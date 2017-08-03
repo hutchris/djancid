@@ -1,0 +1,8 @@
+{% extends 'master.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        <h3>Latest config for {{ device.name }}</h3>
+        <p>{{ config|safe }}</p>
+    </div>
+{% endblock %}
