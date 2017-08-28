@@ -86,15 +86,15 @@ class RouterDB(object):
     def addRouter(self,ip,deviceType="cisco",status="up"):
         if isinstance(status,bool):
             if status:
-                status = "up"
+                statusStr = "up"
             else:
-                status = "down"
+                statusStr = "down"
         with open(self.routerDBDir,"r") as routerDBFile:
             lines = routerDBFile.readlines()
         for line in lines:
             if line.startswith(ip):
                 raise(self.RouterAlreadyExistsException("Router {r} already exists".format(r=ip)))
-        lines.append("{ip};{dt};{st}\n".format(ip=ip,dt=deviceType,st=status))
+        lines.append("{ip};{dt};{st}\n".format(ip=ip,dt=deviceType,st=statusStr))
         with open(self.routerDBDir,"w") as routerDBFile:
             routerDBFile.writelines(lines) 
     def deleteRouter(self,ip):
@@ -114,10 +114,10 @@ class RouterDB(object):
                 if status is not None:
                     if isinstance(status,bool):
                         if status:
-                            status = "up"
+                            statusStr = "up"
                         else:
-                            status = "down"
-                    routerLine[2] = status
+                            statusStr = "down"
+                    routerLine[2] = statusStr
                 lines[i] = "{l}\n".format(l=";".join(routerLine))
         with open(self.routerDBDir,"w") as routerDBFile:
             routerDBFile.writelines(lines)
