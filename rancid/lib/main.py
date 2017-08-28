@@ -182,12 +182,18 @@ class DjancidGroup(DjancidBase):
         '''Pull all settings objects from Django database'''
         self.groupSettings = RancidGroupSetting.objects.filter(rancidGroup=self.name)
         for setting in self.groupSettings:
+            if setting.settingValue == "True":
+                settingValue = True
+            elif setting.settingValue == "False":
+                settingValue = False
+            else:
+                settingValue = setting.settingValue
             if setting.settingName in settings.DBSETTINGS:
-                self.dbDetails[setting.settingName] = setting.settingValue
+                self.dbDetails[setting.settingName] = settingValue
             elif setting.settingName in settings.RCSETTINGS:
-                self.rcDetails[setting.settingName] = setting.settingValue
+                self.rcDetails[setting.settingName] = settingValue
             elif setting.settingName in settings.EXTRASETTINGS:
-                self.exDetails[setting.settingName] = setting.settingValue
+                self.exDetails[setting.settingName] = settingValue
 
     def save(self):
         '''Write group to LIST_OF_GROUPS if not exist. Save settings to database'''

@@ -117,6 +117,8 @@ class RouterDB(object):
                             statusStr = "up"
                         else:
                             statusStr = "down"
+                    else:
+                        statusStr = str(status)
                     routerLine[2] = statusStr
                 lines[i] = "{l}\n".format(l=";".join(routerLine))
         with open(self.routerDBDir,"w") as routerDBFile:
@@ -184,21 +186,19 @@ class Cloginrc(object):
             raise(self.InvalidDetailName("{n} is not a valid cloginrc command".format(n=name)))
         with open(self.cloginrcDir,"r") as cloginrcFile:
             lines = cloginrcFile.readlines()
+        lines = [line for line in lines if "{n} {i}".format(n=name,i=ip) not in line]
         if isinstance(value,bool):
-            value = str(int(value))
-        if isinstance(value,list):
-            value = " ".join(["{{{v}}}".format(v=item) for item in value])
+            valueStr = "{{{v}}}".format(v=str(int(value)))
+        elif isinstance(value,list):
+            valueStr = " ".join(["{{{v}}}".format(v=item) for item in value])
         else:
-            value = "{{{v}}}".format(v=value)
-        detailLine = "add {n} {ip} {v}\n".format(n=name,ip=ip,v=value)
+            valueStr = "{{{v}}}".format(v=value)
+        detailLine = "add {n} {ip} {v}\n".format(n=name,ip=ip,v=valueStr)
         insertIndex = 0
         for i,line in enumerate(lines):
-            if ip in line and name in line:
-                lines.remove(line)
+            if ip in line:
                 insertIndex = i
                 break
-            elif ip in line:
-                insertIndex = i
         lines.insert(insertIndex,detailLine)
         with open(self.cloginrcDir,"w") as cloginrcFile:
             cloginrcFile.writelines(lines)
@@ -206,19 +206,15 @@ class Cloginrc(object):
         for k,v in detailsDict.item():
             self.addDetail(ip=ip,name=k,value=v)
     def deleteDetail(self,ip,name):
-        with open(self.cloginrcDir,"r"):
-            lines = cloginrcDir.readlines()
-        for line in lines:
-            if ip in line and name in line:
-                lines.remove(line)
+        with open(self.cloginrcDir,"r") as cloginrcfile:
+            lines = cloginrcfile.readlines()
+        lines = [line for line in lines if "{n} {i}".format(n=name,i=ip) not in line]
         with open(self.cloginrcDir,"w") as cloginrcFile:
             cloginrcFile.writelines(lines)
     def deleteRouterDetails(self,ip):
         with open(self.cloginrcDir,"r") as cloginrcFile:
             lines = cloginrcFile.readlines()
-        for line in lines:
-            if ip in line:
-                lines.remove(line)
+        lines = [line for line in lines if ip not in line]
         with open(self.cloginrcDir,"w") as cloginrcFile:
             cloginrcFile.writelines(lines)
     class InvalidDetailName(Exception):
