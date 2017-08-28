@@ -38,7 +38,7 @@ class GroupForm(forms.Form):
         groups = Group.objects.all()
         for groupObj in groups:
             fieldName = "perm_{gn}".format(gn=groupObj.name)
-            self.fields[fieldName] = forms.BooleanField(initial=True,label="Group Access: {gn}".format(gn=groupObj.name))
+            self.fields[fieldName] = forms.BooleanField(initial=False,label="Group Access: {gn}".format(gn=groupObj.name))
             self.fields[fieldName].required = False
 
 

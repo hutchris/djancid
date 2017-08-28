@@ -125,7 +125,7 @@ class RouterDB(object):
         with open(self.routerDBDir,"r") as routerDBFile:
             lines = routerDBFile.readlines()
         routerLines = [line for line in lines if line.startswith(ip)]
-        if routerLines:
+        if routerLines and ip:
             router = routerLines[0].replace("\n","").split(";")
         else:
             raise(self.RouterNotFoundException("Router does not exist: {r}".format(r=ip)))

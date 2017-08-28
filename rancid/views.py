@@ -73,6 +73,9 @@ class GroupDetails(BaseView):
         for passwordSetting in ["password","enablepassword"]:
             if passwordSetting in settingsDict.keys():
                 settingsDict[passwordSetting] = "00000000"
+        permObjs = RancidGroupPermission.objects.filter(rancidGroup=groupObj.name)
+        for permObj in permObjs:
+            settingsDict['perm_{gn}'.format(gn=permObj.djangoGroup)] = True
         if request is None:
             form = GroupForm(initial=settingsDict)
         else:
