@@ -11,9 +11,14 @@ def password_validator(value):
         if badValue in value:
             raise(ValidationError("Field cannot contain {bvs}".format(badValues)))
 
+def name_validator(value):
+    badValues = [" ",";",'"']
+    for badValue in badValues:
+        if badValue in value:
+            raise(ValidationError("Field cannot contain {bvs}".format(badValues)))
 
 class GroupForm(forms.Form):
-    name = forms.CharField(label="Group Name*",required=True)
+    name = forms.CharField(label="Group Name*",required=True,validators=[name_validator])
     deviceType = forms.ChoiceField(label="Device Type",required=False)
     status = forms.BooleanField(initial=True,label="Enable Backups",required=False)
     user = forms.CharField(max_length=100,label="Username",required=False)
@@ -43,7 +48,7 @@ class GroupForm(forms.Form):
 
 
 class DeviceForm(forms.Form):
-    ip = forms.CharField(max_length=100,label="IP/Hostname*",required=True)
+    ip = forms.CharField(max_length=100,label="IP/Hostname*",required=True,validators=[name_validator])
     group = forms.ChoiceField(label="Group*",required=True)
     inherits = forms.BooleanField(label="Inherit Group Settings*",initial=True,required=True)
     deviceType = forms.ChoiceField(label="Device Type*",required=True)

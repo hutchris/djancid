@@ -155,6 +155,12 @@ class DjancidDevice(DjancidBase):
         if settingName in self.exDetails.keys():
             del self.exDetails[settingName]
 
+    def changeGroup(self,newGroupObj):
+        self.rdbFile.deleteRouter(self.name)
+        self.parentGroup = newGroupObj
+        self.rdbFile = RouterDB(self.parentGroup.name)
+        self.save()
+
 
 class DjancidGroup(DjancidBase):
     '''Class to represent a Djancid Group. Settings pulled from Django db, devices pulled from 

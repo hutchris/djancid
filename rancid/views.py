@@ -220,8 +220,7 @@ class DeviceDetails(NewDevice):
                     deviceObj.inherits = settingValue
                 elif fieldName == "group":
                     groupObj = DjancidGroup(form.cleaned_data[fieldName])
-                    deviceObj.rdbFile.deleteRouter(deviceObj.name)
-                    deviceObj.parentGroup = groupObj
+                    deviceObj.changeGroup(groupObj)
             deviceObj.save()
             if deviceObj.inherits:
                 for fieldName,fieldValue in form.fields.items():
